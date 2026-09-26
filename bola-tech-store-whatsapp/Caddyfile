@@ -1,0 +1,5 @@
+# Replace with your real domain (its DNS A record must point to this server).
+yourdomain.com {
+	encode gzip
+	reverse_proxy app:3000
+}

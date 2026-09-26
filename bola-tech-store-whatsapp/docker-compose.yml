@@ -1,0 +1,36 @@
+# One-command hosting on a VPS:  docker compose up -d --build
+# Then create the admin + sample data once:  docker compose exec app npm run seed
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bola_tech
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on: [db]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@db:5432/bola_tech
+      NODE_ENV: production
+      TRUST_PROXY: "1"
+    expose: ["3000"]
+
+  # Automatic HTTPS for your domain (edit the domain in Caddyfile). Remove this service if you use another proxy.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+
+volumes:
+  pgdata:
+  caddy_data:
